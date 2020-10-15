@@ -8,6 +8,7 @@ import android.widget.TextView
 import java.lang.Exception
 import java.lang.ref.WeakReference
 
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity(), MyAsyncCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,25 +28,29 @@ class MainActivity : AppCompatActivity(), MyAsyncCallback {
     }
 
     override fun onPostExecute(text: String) {
-        TODO("Not yet implemented")
+        val tvStatus = findViewById<TextView>(R.id.tv_status)
+        val tvDesc = findViewById<TextView>(R.id.tv_desc)
+        tvStatus.setText(R.string.status_post)
+        tvDesc.text = text
     }
 
     companion object{
         private const val INPUT_STRING = "Halo ini Demo AsyncTasc"
     }
 
-    private class DemoAsync(var myListener: MyAsyncCallback): AsyncTask<String, Void, String>() {
+    private class DemoAsync(myListener: MyAsyncCallback): AsyncTask<Any, Any , Any>() {
 
-        companion object{
-            private val LOG_ASNYC = "DemoAsync"
+        private var myListnr: WeakReference<MyAsyncCallback> = WeakReference(myListener)
+
+        override fun onPreExecute() {
+            super.onPreExecute()
+            Log.d(LOG_ASNYC, "status : onPreExecute")
+
+            val myListener = myListnr.get()
+            myListener?.onPreExecute()
         }
 
-        private var myListnr = WeakReference<MyAsyncCallback>()
-        init {
-            this.myListnr = WeakReference<myListener>()
-        }
-
-        override fun doInBackground(vararg params: String?): String {
+        override fun doInBackground(vararg params: Any?): String {
             Log.d(LOG_ASNYC, "status: doInBackground: ")
 
             var output: String? = null
@@ -60,21 +65,16 @@ class MainActivity : AppCompatActivity(), MyAsyncCallback {
             return output.toString()
         }
 
-        override fun onPreExecute() {
-            super.onPreExecute()
-            Log.d(LOG_ASNYC, "status : onPreExecute")
-
-            val myListener = myListener.get()
-            myListener?.onPreExecute()
-        }
-
-        override fun onPostExecute(result: String) {
+        override fun onPostExecute(result: Any?) {
             super.onPostExecute(result)
             Log.d(LOG_ASNYC, "status : onPostExecute")
-            val myListener = this.myListener.get()
-            myListener?.onPostExecute(result)
+            val myListener = this.myListnr.get()
+            myListener?.onPostExecute(result as String)
         }
 
+        companion object{
+            private const val LOG_ASNYC = "DemoAsync"
+        }
 
 
     }
